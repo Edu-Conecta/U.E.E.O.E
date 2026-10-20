@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduConecta | U.E. Emiliano Ortega Espinoza</title>
+    <meta name="description" content="EduConecta: portal de la Unidad Educativa Emiliano Ortega Espinoza, Catamayo, Loja, Ecuador.">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --azul-noche: #071a3d;
+            --azul: #1863dc;
+            --texto: #212121;
+            --gris: #5b6472;
+            --fondo: #f4f6f9;
+            --principal: #1863dc;
+            --principal-oscuro: #0f4cb0;
+            --suave: #e8f0fd;
+            --radio: 14px;
+            --sombra: 0 6px 24px rgba(7, 26, 61, .10);
+        }
+
+        /* Color de acento según la jornada elegida */
+        body[data-jornada="escuela"]    { --principal: #2e9e3f; --principal-oscuro: #217a2f; --suave: #e8f6ea; }
+        body[data-jornada="matutina"]   { --principal: #e8890c; --principal-oscuro: #c26f00; --suave: #fdf3e3; }
+        body[data-jornada="vespertina"] { --principal: #d9472b; --principal-oscuro: #b53520; --suave: #fbebe7; }
+        body[data-jornada="nocturna"]   { --principal: #1863dc; --principal-oscuro: #0f4cb0; --suave: #e8f0fd; }
+
+        html { scroll-behavior: smooth; scroll-padding-top: 90px; }
+
+        body {
+            font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+            background: var(--fondo);
+            color: var(--texto);
+            line-height: 1.6;
+        }
+        body.bloqueado { overflow: hidden; }
+
+        img { max-width: 100%; display: block; }
+        a { color: inherit; }
+
+        .contenedor { width: min(1160px, 90%); margin: 0 auto; }
+
+        /* ---------- BOTONES ---------- */
+        .boton {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--principal);
+            color: #fff;
+            text-decoration: none;
+            padding: 13px 24px;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 15px;
+            border: 2px solid var(--principal);
+            cursor: pointer;
+            transition: .25s;
+        }
+        .boton:hover { background: var(--principal-oscuro); border-color: var(--principal-oscuro); transform: translateY(-2px); }
+        .boton.claro { background: transparent; color: #fff; border-color: rgba(255,255,255,.7); }
+        .boton.claro:hover { background: #fff; color: var(--azul-noche); border-color: #fff; }
+        .boton.wsp { background: #1faa59; border-color: #1faa59; }
+        .boton.wsp:hover { background: #168a47; border-color: #168a47; }
+
+        /* ---------- PANTALLA DE JORNADA ---------- */
+        #selector {
+            position: fixed; inset: 0; z-index: 1000;
+            background:
+                radial-gradient(circle at 20% 10%, rgba(24,99,220,.45), transparent 50%),
+                radial-gradient(circle at 85% 90%, rgba(46,158,63,.35), transparent 45%),
+                #071a3d;
+            display: flex; align-items: center; justify-content: center;
+            padding: 24px; overflow-y: auto;
+            transition: opacity .4s;
+        }
+        #selector.oculto { opacity: 0; pointer-events: none; }
+
+        .selector-caja { width: min(980px, 100%); text-align: center; color: #fff; }
+        .selector-caja .escudo {
+            width: 120px; height: 120px; object-fit: cover; border-radius: 50%;
+            margin: 0 auto 14px; border: 4px solid rgba(255,255,255,.85);
+            box-shadow: 0 0 40px rgba(66,165,255,.55);
+        }
+        .selector-caja .marca { font-size: 15px; letter-spacing: 4px; text-transform: uppercase; color: #8fc1ff; font-weight: 700; }
+        .selector-caja h2 { font-size: clamp(24px, 4vw, 36px); margin: 6px 0 8px; line-height: 1.2; }
+        .selector-caja > p { color: #cfe3ff; margin-bottom: 28px; }
+
+        .jornadas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+        .jornada-btn {
+            background: #fff; color: var(--azul-noche); border: none; border-radius: var(--radio);
+            padding: 26px 14px; cursor: pointer; transition: .25s;
+            border-bottom: 6px solid var(--c); font: inherit;
+        }
+        .jornada-btn:hover, .jornada-btn:focus-visible { transform: translateY(-6px); outline: none; box-shadow: 0 14px 30px rgba(0,0,0,.35); }
+        .jornada-btn .emoji { font-size: 44px; display: block; margin-bottom: 6px; }
+        .jornada-btn strong { font-size: 20px; display: block; }
+        .jornada-btn small { color: var(--gris); font-size: 13px; }
+
+        /* ---------- BARRA SUPERIOR ---------- */
+        .barra-top { background: var(--azul-noche); color: #cfe3ff; font-size: 13px; }
+        .barra-top .contenedor { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px 20px; padding: 8px 0; }
+        .barra-top a { text-decoration: none; font-weight: 700; color: #fff; }
+        .barra-top a:hover { color: #8fc1ff; }
+
+        /* ---------- ENCABEZADO ---------- */
+        header {
+            background: #fff; position: sticky; top: 0; z-index: 200;
+            box-shadow: 0 2px 14px rgba(7,26,61,.10);
+            border-bottom: 4px solid var(--principal);
+        }
+        .nav-fila { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 0; }
+
+        .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .logo img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; }
+        .logo b { display: block; font-size: 22px; color: var(--azul-noche); line-height: 1; letter-spacing: -.3px; }
+        .logo b span { color: var(--principal); }
+        .logo small { display: block; font-size: 11.5px; color: var(--gris); margin-top: 3px; }
+
+        nav { display: flex; align-items: center; gap: 4px; }
+        nav > a, .menu > button {
+            background: none; border: none; font: inherit; font-weight: 600; font-size: 15px;
+            color: var(--azul-noche); text-decoration: none; padding: 10px 12px; border-radius: 8px; cursor: pointer;
+        }
+        nav > a:hover, .menu > button:hover { background: var(--suave); color: var(--principal-oscuro); }
+
+        .menu { position: relative; }
+        .submenu {
+            position: absolute; top: 100%; left: 0; min-width: 210px; background: #fff;
+            border-radius: 10px; box-shadow: var(--sombra); padding: 8px; display: none;
+        }
+        .menu:hover .submenu, .menu:focus-within .submenu { display: block; }
+        .submenu a { display: block; padding: 9px 12px; text-decoration: none; border-radius: 6px; font-size: 14px; color: var(--azul-noche); }
+        .submenu a:hover { background: var(--suave); }
+
+        .acciones { display: flex; align-items: center; gap: 10px; }
+        .chip-jornada {
+            background: var(--suave); color: var(--principal-oscuro); border: 2px solid var(--principal);
+            padding: 7px 12px; border-radius: 999px; font-weight: 700; font-size: 13px; cursor: pointer; font-family: inherit;
+        }
+        .chip-jornada:hover { background: var(--principal); color: #fff; }
+        .hamburguesa { display: none; background: none; border: none; font-size: 28px; cursor: pointer; color: var(--azul-noche); }
+
+        /* ---------- INICIO ---------- */
+        .hero {
+            background:
+                radial-gradient(circle at 85% 20%, rgba(24,99,220,.55), transparent 55%),
+                linear-gradient(160deg, #071a3d 0%, #0b2a63 100%);
+            color: #fff; padding: 70px 0 0; overflow: hidden;
+        }
+        .hero-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 40px; align-items: center; padding-bottom: 60px; }
+        .etiqueta {
+            display: inline-block; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.3);
+            padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 700; margin-bottom: 18px;
+        }
+        .hero h2 { font-size: clamp(38px, 6vw, 62px); line-height: 1.05; letter-spacing: -1.5px; margin-bottom: 8px; }
+        .hero h2 span { color: #6fb1ff; }
+        .hero .colegio { font-size: 17px; font-weight: 600; color: #cfe3ff; margin-bottom: 16px; }
+        .hero .lema { font-size: 19px; font-style: italic; color: #e6f0ff; max-width: 520px; margin-bottom: 28px; }
+        .hero-botones { display: flex; flex-wrap: wrap; gap: 12px; }
+        .hero-img { border-radius: 20px; overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,.45); border: 4px solid rgba(255,255,255,.25); }
+        .hero-img img { width: 100%; height: auto; }
+
+        .datos { background: #fff; box-shadow: var(--sombra); border-radius: var(--radio) var(--radio) 0 0; }
+        .datos .contenedor { display: grid; grid-template-columns: repeat(4, 1fr); }
+        .dato { padding: 22px 16px; text-align: center; border-right: 1px solid #e7ebf2; color: var(--azul-noche); }
+        .dato:last-child { border-right: none; }
+        .dato b { display: block; font-size: 22px; color: var(--principal); line-height: 1.2; }
+        .dato span { font-size: 13.5px; color: var(--gris); }
+
+        /* ---------- SECCIONES ---------- */
+        section { padding: 70px 0; }
+        .cabecera { text-align: center; max-width: 680px; margin: 0 auto 40px; }
+        .cabecera .sobre { color: var(--principal); font-weight: 700; letter-spacing: 2px; font-size: 13px; text-transform: uppercase; }
+        .cabecera h2 { font-size: clamp(26px, 4vw, 36px); color: var(--azul-noche); line-height: 1.2; margin: 6px 0 10px; }
+        .cabecera p { color: var(--gris); }
+
+        /* Quiénes somos */
+        .quienes { display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px; align-items: center; }
+        .quienes p { color: #3d4452; margin-bottom: 14px; }
+        .quienes img { border-radius: 20px; box-shadow: var(--sombra); }
+
+        /* Misión y visión */
+        .mv { background: var(--azul-noche); color: #fff; }
+        .mv .cabecera h2 { color: #fff; }
+        .mv .cabecera p, .mv .cabecera .sobre { color: #9ec8ff; }
+        .mv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .mv-caja { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.15); border-radius: var(--radio); padding: 32px; }
+        .mv-caja h3 { font-size: 24px; margin-bottom: 12px; color: #6fb1ff; }
+        .mv-caja p { color: #dce9ff; margin-bottom: 12px; font-size: 15.5px; }
+        .frase { text-align: center; margin-top: 40px; font-size: 20px; font-style: italic; color: #e6f0ff; }
+        .frase small { display: block; font-style: normal; color: #9ec8ff; margin-top: 6px; font-size: 14px; }
+
+        /* Oferta educativa */
+        .oferta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+        .programa {
+            background: #fff; border-radius: var(--radio); padding: 28px 24px; box-shadow: var(--sombra);
+            border-top: 5px solid var(--principal); transition: .25s;
+        }
+        .programa:hover { transform: translateY(-5px); }
+        .programa .ico { font-size: 36px; margin-bottom: 10px; }
+        .programa h3 { color: var(--azul-noche); font-size: 18px; line-height: 1.25; margin-bottom: 8px; }
+        .programa p { color: var(--gris); font-size: 15px; }
+        .programa.destacado { background: var(--suave); }
+
+
+        /* Oferta: tarjetas clicables + ventana ampliada */
+        button.programa { border: none; border-top: 5px solid var(--principal); text-align: left; font: inherit; cursor: pointer; width: 100%; display: block; }
+        button.programa:focus-visible { outline: 3px solid var(--principal); outline-offset: 2px; }
+        .programa .mas { display: inline-block; margin-top: 14px; color: var(--principal-oscuro); font-weight: 700; font-size: 14px; }
+
+        #detalle { position: fixed; inset: 0; z-index: 900; background: rgba(7,26,61,.72); display: none; align-items: center; justify-content: center; padding: 16px; }
+        #detalle.abierto { display: flex; animation: aparece .25s; }
+        @keyframes aparece { from { opacity: 0; } to { opacity: 1; } }
+        .det-caja { background: #fff; border-radius: 20px; width: min(860px, 100%); max-height: 92vh; overflow-y: auto; position: relative; box-shadow: 0 30px 80px rgba(0,0,0,.5); animation: sube .3s; }
+        @keyframes sube { from { transform: translateY(30px); } to { transform: none; } }
+        .det-cab { background: linear-gradient(135deg, var(--azul-noche), #0b2a63); color: #fff; padding: 34px 32px 26px; border-radius: 20px 20px 0 0; }
+        .det-cab .ico { font-size: 46px; }
+        .det-cab h3 { font-size: clamp(22px, 4vw, 30px); line-height: 1.2; margin: 6px 0; }
+        .det-cab p { color: #cfe3ff; }
+        .det-cerrar { position: absolute; top: 14px; right: 14px; width: 40px; height: 40px; border-radius: 50%; border: none; background: rgba(255,255,255,.18); color: #fff; font-size: 22px; cursor: pointer; }
+        .det-cerrar:hover { background: rgba(255,255,255,.35); }
+        .det-cuerpo { padding: 28px 32px 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .det-cuerpo h4 { color: var(--azul-noche); margin-bottom: 10px; font-size: 16px; }
+        .det-cuerpo ul { list-style: none; }
+        .det-cuerpo li { padding: 7px 0 7px 26px; position: relative; color: #3d4452; font-size: 15px; border-bottom: 1px dashed #e1e6ef; }
+        .det-cuerpo li::before { content: "✔"; position: absolute; left: 0; color: var(--principal); font-weight: 700; }
+        .det-cuerpo .ancho { grid-column: 1 / -1; }
+        .det-cuerpo p { color: #3d4452; font-size: 15px; }
+        .det-info { background: var(--suave); border-radius: 12px; padding: 16px 18px; font-size: 14.5px; color: #3d4452; }
+        .det-info b { color: var(--azul-noche); }
+        .det-pie { padding: 20px 32px 28px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+        .det-nav { display: flex; gap: 8px; }
+        .det-nav button { background: var(--suave); border: none; color: var(--azul-noche); font: inherit; font-weight: 700; padding: 10px 14px; border-radius: 999px; cursor: pointer; }
+        .det-nav button:hover { background: var(--principal); color: #fff; }
+        @media (max-width: 680px) { .det-cuerpo { grid-template-columns: 1fr; padding: 22px 20px 4px; } .det-cab { padding: 28px 20px 22px; } .det-pie { padding: 16px 20px 24px; } }
+
+
+        .vista[hidden], [hidden] { display: none !important; }
+        nav > a.activo { background: var(--suave); color: var(--principal-oscuro); }
+        .hero .intro { font-size: 18px; color: #e6f0ff; max-width: 540px; margin-bottom: 14px; }
+        #strip { display: grid; grid-template-columns: repeat(4, 1fr); }
+        .pills { background: #fff; border-bottom: 1px solid #e7ebf2; }
+        .pills .contenedor { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 0; justify-content: center; }
+        .pills a { text-decoration: none; padding: 8px 16px; border-radius: 999px; background: var(--suave); color: var(--principal-oscuro); font-weight: 700; font-size: 14px; }
+        .pills a:hover { background: var(--principal); color: #fff; }
+        .galeria { display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 190px; gap: 12px; }
+        .gfoto { border: none; padding: 0; border-radius: 14px; overflow: hidden; cursor: zoom-in; background: #d8dde6; box-shadow: var(--sombra); }
+        .gfoto:first-child { grid-column: span 2; grid-row: span 2; }
+        .gfoto img { width: 100%; height: 100%; object-fit: cover; transition: .4s; }
+        .gfoto:hover img { transform: scale(1.06); }
+        #lb { position: fixed; inset: 0; z-index: 1200; background: rgba(0,0,0,.88); display: flex; align-items: center; justify-content: center; }
+        #lb img { max-width: 88vw; max-height: 88vh; border-radius: 8px; }
+        #lb button { position: absolute; background: rgba(255,255,255,.18); color: #fff; border: none; width: 46px; height: 46px; border-radius: 50%; font-size: 26px; cursor: pointer; }
+        #lb-x { top: 16px; right: 16px; } #lb-p { left: 14px; } #lb-n { right: 14px; }
+        .tabla-wrap { overflow-x: auto; margin-top: 24px; border-radius: 12px; box-shadow: var(--sombra); }
+        .tabla { width: 100%; border-collapse: collapse; background: #fff; font-size: 15px; }
+        .tabla th { background: var(--azul-noche); color: #fff; text-align: left; padding: 12px 14px; }
+        .tabla td { padding: 11px 14px; border-top: 1px solid #e7ebf2; color: #3d4452; }
+        .det-fotos { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+        .det-fotos button { border: none; padding: 0; height: 90px; border-radius: 8px; overflow: hidden; cursor: zoom-in; background: #d8dde6; }
+        .det-fotos img { width: 100%; height: 100%; object-fit: cover; }
+        .det-cuerpo .ancho p { margin-bottom: 10px; }
+        @media (max-width: 680px) { #strip { grid-template-columns: 1fr 1fr; } .galeria { grid-template-columns: 1fr 1fr; grid-auto-rows: 130px; } .gfoto:first-child { grid-column: span 2; grid-row: span 1; } }
+
+        /* Mi jornada */
+        .jornada-sec { background: var(--suave); }
+        .jornada-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 28px; align-items: start; }
+        .panel { background: #fff; border-radius: var(--radio); padding: 28px; box-shadow: var(--sombra); }
+        .panel h3 { color: var(--azul-noche); margin-bottom: 14px; font-size: 19px; }
+        .autoridad { display: flex; align-items: center; gap: 14px; padding: 14px; background: var(--suave); border-radius: 10px; margin-bottom: 18px; }
+        .autoridad .avatar { width: 50px; height: 50px; border-radius: 50%; background: var(--principal); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; flex-shrink: 0; }
+        .autoridad b { display: block; color: var(--azul-noche); }
+        .autoridad span { font-size: 13px; color: var(--gris); }
+        .panel p.nota { color: var(--gris); font-size: 15px; }
+
+        .aviso { border-left: 5px solid var(--principal); background: #fff; padding: 16px 18px; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(7,26,61,.06); }
+        .aviso h4 { color: var(--azul-noche); margin-bottom: 3px; font-size: 16px; }
+        .aviso p { color: var(--gris); font-size: 14.5px; }
+
+        .docs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+        .doc { background: #fff; border-radius: 10px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; gap: 10px; box-shadow: 0 2px 8px rgba(7,26,61,.06); font-size: 14.5px; font-weight: 600; color: var(--azul-noche); }
+        .doc a { background: var(--azul-noche); color: #fff; padding: 7px 12px; border-radius: 6px; text-decoration: none; font-size: 13px; white-space: nowrap; }
+        .doc a:hover { background: var(--principal); }
+
+        /* Autoridades */
+        .equipo { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+        .persona { background: #fff; border-radius: var(--radio); padding: 24px 16px; text-align: center; box-shadow: var(--sombra); }
+        .persona .avatar { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--azul), var(--azul-noche)); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; margin: 0 auto 12px; }
+        .persona b { display: block; color: var(--azul-noche); font-size: 15px; line-height: 1.3; }
+        .persona span { display: block; margin-top: 6px; color: var(--principal-oscuro); font-size: 12.5px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; }
+        .subtitulo { text-align: center; color: var(--azul-noche); margin: 44px 0 20px; font-size: 22px; }
+        .equipo.tres { grid-template-columns: repeat(3, 1fr); max-width: 820px; margin: 0 auto; }
+
+
+        .persona .avatar, .autoridad .avatar { position: relative; overflow: hidden; }
+        .persona .avatar { width: 96px; height: 96px; font-size: 26px; border: 4px solid var(--suave); }
+        .persona .avatar img, .autoridad .avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+
+        /* Visítanos */
+        .visitanos { background: #e9e6dc; }
+        .visita-grid { display: grid; grid-template-columns: 1fr 1.25fr; gap: 36px; align-items: center; }
+        .visita-info { text-align: center; }
+        .visita-info h2 { color: var(--principal-oscuro); font-size: clamp(30px, 5vw, 42px); margin-bottom: 18px; }
+        .visita-info .direccion { font-size: 18px; font-weight: 700; color: var(--azul-noche); margin-bottom: 24px; }
+        .visita-info h3 { font-size: 24px; color: var(--azul-noche); margin-bottom: 4px; }
+        .visita-info .horas { font-size: 17px; font-weight: 700; color: var(--azul-noche); margin-bottom: 26px; }
+        .mapa { border-radius: var(--radio); overflow: hidden; box-shadow: var(--sombra); background: #d8dde6; }
+        .mapa iframe { width: 100%; height: 400px; border: 0; display: block; }
+        @media (max-width: 980px) { .visita-grid { grid-template-columns: 1fr; } }
+
+        /* Contacto */
+        .contacto { background: var(--azul-noche); color: #fff; }
+        .contacto .cabecera h2 { color: #fff; }
+        .contacto .cabecera p, .contacto .cabecera .sobre { color: #9ec8ff; }
+        .contacto-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+        .info-item { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 20px; }
+        .info-item .ico { width: 46px; height: 46px; border-radius: 12px; background: rgba(255,255,255,.1); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+        .info-item b { display: block; font-size: 14px; color: #9ec8ff; font-weight: 600; }
+        .info-item a, .info-item span { font-size: 17px; color: #fff; text-decoration: none; }
+        .info-item a:hover { text-decoration: underline; }
+        form { background: #fff; padding: 28px; border-radius: var(--radio); color: var(--texto); }
+        form h3 { color: var(--azul-noche); margin-bottom: 14px; }
+        form input, form textarea { width: 100%; padding: 13px; margin-bottom: 14px; border: 1px solid #cfd6e2; border-radius: 8px; font: inherit; }
+        form input:focus, form textarea:focus { outline: 2px solid var(--principal); border-color: transparent; }
+        form textarea { height: 110px; resize: none; }
+        form .boton { width: 100%; justify-content: center; }
+
+        /* Pie */
+        footer { background: #020b1c; color: #9aa7bd; text-align: center; padding: 28px 16px; font-size: 14px; }
+        footer b { color: #fff; }
+        .redes { margin-top: 10px; }
+        .redes a { color: #6fb1ff; text-decoration: none; margin: 0 10px; font-weight: 600; }
+        .redes a:hover { color: #fff; }
+
+        /* WhatsApp flotante */
+        .wsp-flotante {
+            position: fixed; right: 18px; bottom: 18px; z-index: 300;
+            background: #1faa59; color: #fff; text-decoration: none; font-weight: 700;
+            padding: 13px 20px; border-radius: 999px; box-shadow: 0 8px 24px rgba(0,0,0,.3);
+            display: flex; align-items: center; gap: 8px; transition: .25s;
+        }
+        .wsp-flotante:hover { background: #168a47; transform: translateY(-3px); }
+
+        /* ---------- CELULAR / TABLET ---------- */
+        @media (max-width: 980px) {
+            .jornadas { grid-template-columns: repeat(2, 1fr); }
+            .oferta { grid-template-columns: repeat(2, 1fr); }
+            .equipo { grid-template-columns: repeat(2, 1fr); }
+            .hero-grid, .quienes, .jornada-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 860px) {
+            .hamburguesa { display: block; }
+            nav {
+                display: none; position: absolute; left: 0; right: 0; top: 100%;
+                background: #fff; flex-direction: column; align-items: stretch; padding: 10px 5%;
+                box-shadow: 0 12px 20px rgba(7,26,61,.15);
+            }
+            nav.abierto { display: flex; }
+            .submenu { position: static; display: block; box-shadow: none; padding: 0 0 0 14px; }
+            .menu > button { width: 100%; text-align: left; }
+            .nav-fila { position: relative; }
+            .acciones .chip-jornada { display: none; }
+        }
+
+        @media (max-width: 680px) {
+            section { padding: 50px 0; }
+            .datos .contenedor { grid-template-columns: 1fr 1fr; }
+            .dato:nth-child(2) { border-right: none; }
+            .dato:nth-child(-n+2) { border-bottom: 1px solid #e7ebf2; }
+            .mv-grid, .contacto-grid, .oferta, .docs { grid-template-columns: 1fr; }
+            .equipo, .equipo.tres { grid-template-columns: 1fr 1fr; }
+            .jornadas { grid-template-columns: 1fr 1fr; gap: 12px; }
+            .wsp-flotante span { display: none; }
+            .wsp-flotante { padding: 15px; font-size: 22px; }
+        }
+    </style>
+</head>
+
+<body class="bloqueado">
+
+    <!-- ===== ELEGIR JORNADA ===== -->
+    <div id="selector" role="dialog" aria-modal="true" aria-labelledby="selector-titulo">
+        <div class="selector-caja">
+            <img class="escudo" src="logo.png" alt="Escudo de la Unidad Educativa Emiliano Ortega Espinoza">
+            <div class="marca">EduConecta</div>
+            <h2 id="selector-titulo">Unidad Educativa Emiliano Ortega Espinoza</h2>
+            <p>¿De qué jornada eres? Elige una para ver tu información.</p>
+
+            <div class="jornadas">
+                <button class="jornada-btn" data-j="escuela" style="--c:#2e9e3f">
+                    <span class="emoji">🎒</span><strong>Escuela</strong><small>Niños y niñas de básica</small>
+                </button>
+                <button class="jornada-btn" data-j="matutina" style="--c:#e8890c">
+                    <span class="emoji">🌅</span><strong>Matutina</strong><small>Jornada de la mañana</small>
+                </button>
+                <button class="jornada-btn" data-j="vespertina" style="--c:#d9472b">
+                    <span class="emoji">🌇</span><strong>Vespertina</strong><small>Jornada de la tarde</small>
+                </button>
+                <button class="jornada-btn" data-j="nocturna" style="--c:#1863dc">
+                    <span class="emoji">🌙</span><strong>Nocturna</strong><small>Jornada de la noche</small>
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ===== BARRA SUPERIOR ===== -->
+    <div class="barra-top">
+        <div class="contenedor">
+            <span>📍 Catamayo, Loja · Lunes a viernes 7:00 – 17:00</span>
+            <span>📞 <a href="tel:+593991876441">099 187 6441</a></span>
+        </div>
+    </div>
+
+    <!-- ===== ENCABEZADO ===== -->
+    <header>
+        <div class="contenedor nav-fila">
+            <a class="logo" href="#inicio">
+                <img src="logo.png" alt="Escudo institucional">
+                <div>
+                    <b>Edu<span>Conecta</span></b>
+                    <small>U.E. Emiliano Ortega Espinoza</small>
+                </div>
+            </a>
+
+            <nav id="menu">
+                <a href="#" data-ir="inicio">Inicio</a>
+                <a href="#" data-ir="nosotros">Quiénes somos</a>
+                <a href="#" data-ir="propuesta">Propuesta educativa</a>
+                <a href="#" data-ir="inicio" data-sc="mi-jornada">Información</a>
+                <a href="#" data-ir="visitanos">Visítanos</a>
+            </nav>
+
+            <div class="acciones">
+                <button id="cambiar" class="chip-jornada" type="button">🔄 <span id="chip-texto">Jornada</span></button>
+                <a class="boton" href="#" data-ir="visitanos" data-sc="contacto">Contacto</a>
+                <button class="hamburguesa" id="hamb" type="button" aria-label="Abrir menú">☰</button>
+            </div>
+        </div>
+    </header>
+    <div class="vista" id="vista-inicio">
+
+
+    <!-- ===== INICIO ===== -->
+    <section class="hero" id="inicio" style="padding-bottom:0">
+        <div class="contenedor hero-grid">
+            <div>
+                <span class="etiqueta" id="hero-etiqueta">Bienvenidos</span>
+                <h2>Edu<span>Conecta</span></h2>
+                <p class="colegio">Unidad Educativa Emiliano Ortega Espinoza · Catamayo, Loja</p>
+                <p class="intro" id="hero-intro"></p>
+                <p class="lema">«Sembrando semillas de conocimiento para cosechar un futuro mejor.»</p>
+                <div class="hero-botones">
+                    <a class="boton wsp" href="https://wa.me/593991876441?text=Hola%2C%20quisiera%20informaci%C3%B3n%20sobre%20la%20Unidad%20Educativa%20Emiliano%20Ortega%20Espinoza" target="_blank" rel="noopener">💬 Escríbenos por WhatsApp</a>
+                    <a class="boton claro" href="#" data-ir="inicio" data-sc="oferta-jornada">Ver oferta de tu jornada</a>
+                </div>
+            </div>
+            <div class="hero-img">
+                <img src="banner.png" alt="Cuadro de honor y reverencia a la bandera del Ecuador">
+            </div>
+        </div>
+
+        <div class="datos"><div class="contenedor" id="strip"></div></div>
+    </section>
+    <section id="galeria">
+        <div class="contenedor">
+            <div class="cabecera"><span class="sobre">Galería</span><h2 id="g-titulo"></h2></div>
+            <div class="galeria" id="galeria-grid"></div>
+        </div>
+    </section>
+
+    <section id="oferta-jornada" style="padding-top:0">
+        <div class="contenedor">
+            <div class="cabecera"><span class="sobre">Tu oferta</span><h2>Qué se estudia en tu jornada</h2>
+                <p>Toca una tarjeta para ver más. <a href="#" data-ir="propuesta" style="color:var(--principal-oscuro);font-weight:700">Ver toda la propuesta educativa →</a></p></div>
+            <div class="oferta" id="oferta-jornada-grid"></div>
+        </div>
+    </section>
+
+
+
+    <!-- ===== MI JORNADA (cambia según la elección) ===== -->
+    <section class="jornada-sec" id="mi-jornada">
+        <div class="contenedor">
+            <div class="cabecera">
+                <span class="sobre" id="j-sobre">Información</span>
+                <h2 id="j-titulo"></h2>
+                <p id="j-sub"></p>
+            </div>
+
+            <div class="jornada-grid">
+                <div class="panel">
+                    <h3>Responsable de tu jornada</h3>
+                    <div class="autoridad">
+                        <div class="avatar" id="j-avatar"></div>
+                        <div><b id="j-nombre"></b><span id="j-cargo"></span></div>
+                    </div>
+                    <h3>Horario de atención</h3>
+                    <p class="nota">Lunes a viernes, de 7:00 a 17:00.</p>
+                    <p class="nota" id="j-extra" style="margin-top:14px"></p>
+                </div>
+
+                <div>
+                    <div id="j-avisos"></div>
+                    <div class="docs" id="j-docs"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+    </div>
+
+    <div class="vista" id="vista-nosotros" hidden><div class="pills"><div class="contenedor"><a href="#" data-sc="nosotros">Quiénes somos</a><a href="#" data-sc="mision">Misión y visión</a><a href="#" data-sc="autoridades">Autoridades</a></div></div>
+
+
+
+    <!-- ===== QUIÉNES SOMOS ===== -->
+    <section id="nosotros">
+        <div class="contenedor quienes">
+            <div>
+                <div class="cabecera" style="text-align:left;margin:0 0 20px">
+                    <span class="sobre">Quiénes somos</span>
+                    <h2>Una institución para toda la comunidad de Catamayo</h2>
+                </div>
+                <p>La <b>Unidad Educativa Emiliano Ortega Espinoza</b> ofrece un servicio educativo público, gratuito, inclusivo y de calidad en Educación General Básica y Bachillerato.</p>
+                <p>Acogemos con calidez y equidad a niñas, niños, adolescentes y adultos, sin distinción de género, etnia ni condición socioeconómica, con una formación académica sólida, técnica y humanista.</p>
+                <p><b>EduConecta</b> es el espacio digital donde estudiantes, docentes y familias encuentran la información de su jornada en un solo lugar.</p>
+            </div>
+            <img src="https://ueeoe.wordpress.com/wp-content/uploads/2025/07/emiliano-ortega-1-696x313-1-1.jpg" alt="Unidad Educativa Emiliano Ortega Espinoza" onerror="this.src='logo.png'">
+        </div>
+    </section>
+
+
+    <!-- ===== MISIÓN Y VISIÓN ===== -->
+    <section class="mv" id="mision">
+        <div class="contenedor">
+            <div class="cabecera">
+                <span class="sobre">Nuestra identidad</span>
+                <h2>Misión y visión</h2>
+            </div>
+            <div class="mv-grid">
+                <div class="mv-caja">
+                    <h3>Misión</h3>
+                    <p>Brindar un servicio educativo público, gratuito, inclusivo y de calidad en los niveles de Educación General Básica (de 1.º a 10.º grado) y Bachillerato, en sus modalidades en Ciencias, Informática, Electromecánica, Deportes y Bachillerato Intensivo para personas con escolaridad inconclusa.</p>
+                    <p>Nos comprometemos a desarrollar competencias para la vida, el trabajo y la ciudadanía, con un equipo docente ético y comprometido, y valores como el respeto, la responsabilidad, la solidaridad y la justicia.</p>
+                </div>
+                <div class="mv-caja">
+                    <h3>Visión</h3>
+                    <p>Ser una institución líder en la formación integral de estudiantes, reconocida por su excelencia académica, calidez humana y compromiso social, que impulsa una educación inclusiva, equitativa, técnica y científica.</p>
+                    <p>Aspiramos a ser un referente educativo en el sur del Ecuador, fomentando el pensamiento crítico, la creatividad y la innovación en un ambiente seguro, participativo y motivador.</p>
+                </div>
+            </div>
+            <p class="frase">“La educación es el arma más poderosa que puedes usar para cambiar el mundo.”<small>Nelson Mandela · Premio Nobel de la Paz, 1993</small></p>
+        </div>
+    </section>
+    <section style="background:var(--suave)">
+        <div class="contenedor quienes">
+            <div><div class="cabecera" style="text-align:left;margin:0 0 16px"><span class="sobre">Enfoque metodológico</span><h2>Aprender haciendo, juntos</h2></div>
+                <p>“Nuestra propuesta metodológica se basa en el aprendizaje activo, significativo y colaborativo, fomentando el pensamiento crítico, la experimentación y la investigación. Utilizamos estrategias didácticas que promueven la participación, la inclusión y la personalización del aprendizaje.”</p></div>
+            <figure><img src="https://ueeoe.wordpress.com/wp-content/uploads/2025/07/foto-general2.png?w=1200" alt="Planta docente" loading="lazy" onerror="this.closest('figure').remove()"><figcaption style="text-align:center;font-size:13px;color:var(--gris);margin-top:8px;font-weight:700">PLANTA DOCENTE · U.E. EMILIANO ORTEGA ESPINOZA</figcaption></figure>
+        </div>
+    </section>
+
+
+
+    <!-- ===== AUTORIDADES ===== -->
+    <section id="autoridades">
+        <div class="contenedor">
+            <div class="cabecera">
+                <span class="sobre">Equipo</span>
+                <h2>Autoridades de la institución</h2>
+            </div>
+
+            <h3 class="subtitulo" style="margin-top:0">Equipo administrativo</h3>
+            <div class="equipo">
+                <div class="persona"><div class="avatar">JT<img src="https://ueeoe.wordpress.com/wp-content/uploads/2025/07/foto.jpg" alt="" loading="lazy" onerror="this.remove()"></div><b>Mgs. Jaime Alberto Torres</b><span>Rector</span></div>
+                <div class="persona"><div class="avatar">JC<img src="https://ueeoe.wordpress.com/wp-content/uploads/2025/07/foto2.jpg" alt="" loading="lazy" onerror="this.remove()"></div><b>Mgs. Jessica Curimilma</b><span>Vicerrectora jornada matutina</span></div>
+                <div class="persona"><div class="avatar">JS<img src="https://ueeoe.wordpress.com/wp-content/uploads/2025/07/jimmy.jpg" alt="" loading="lazy" onerror="this.remove()"></div><b>Lic. Jimmy Patricio Saritama</b><span>Vicerrector jornadas vespertina y nocturna</span></div>
+                <div class="persona"><div class="avatar">SQ<img src="https://ueeoe.wordpress.com/wp-content/uploads/2025/07/foto3.jpg" alt="" loading="lazy" onerror="this.remove()"></div><b>Mgs. Samuel Quizhpe</b><span>Inspector general</span></div>
+                <div class="persona"><div class="avatar">LC<img src="https://ueeoe.wordpress.com/wp-content/uploads/2025/07/luz5.jpg" alt="" loading="lazy" onerror="this.remove()"></div><b>Lic. Luz Victoria Carrión</b><span>Coordinadora DECE</span></div>
+                <div class="persona"><div class="avatar">JB<img src="https://ueeoe.wordpress.com/wp-content/uploads/2025/07/foto5.jpg" alt="" loading="lazy" onerror="this.remove()"></div><b>Lic. José Bermeo Jimbo</b><span>Sub-inspector</span></div>
+                <div class="persona"><div class="avatar">RB<img src="https://ueeoe.wordpress.com/wp-content/uploads/2025/07/foto6.jpg" alt="" loading="lazy" onerror="this.remove()"></div><b>Mgs. Rosana Berrú</b><span>Coordinadora PCEI modalidad intensiva</span></div>
+            </div>
+
+            <h3 class="subtitulo">Consejo Ejecutivo 2025 – 2026</h3>
+            <div class="equipo tres">
+                <div class="persona"><div class="avatar">MP<img src="https://ueeoe.wordpress.com/wp-content/uploads/2025/07/melva.png" alt="" loading="lazy" onerror="this.remove()"></div><b>Mgs. Melva Paucar Chamba</b><span>Primer vocal principal</span></div>
+                <div class="persona"><div class="avatar">DG<img src="https://ueeoe.wordpress.com/wp-content/uploads/2025/07/didio.jpg" alt="" loading="lazy" onerror="this.remove()"></div><b>Mgs. Didio Germán Gaona</b><span>Segundo vocal principal</span></div>
+                <div class="persona"><div class="avatar">JS<img src="https://ueeoe.wordpress.com/wp-content/uploads/2025/07/jimmy.jpg" alt="" loading="lazy" onerror="this.remove()"></div><b>Lic. Jimmy Patricio Saritama</b><span>Tercer vocal principal</span></div>
+            </div>
+        </div>
+    </section>
+    </div>
+
+    <div class="vista" id="vista-propuesta" hidden>
+    <section style="padding-bottom:10px">
+        <div class="contenedor" style="max-width:900px">
+            <div class="cabecera"><span class="sobre">Propuesta educativa</span><h2>Educación pública, gratuita, inclusiva y de calidad</h2></div>
+            <p style="color:#3d4452;margin-bottom:14px">La Unidad Educativa Emiliano Ortega Espinoza, ubicada en el cantón Catamayo, ofrece una propuesta orientada a la formación integral de niñas, niños, adolescentes y personas adultas, con valores, calidez humana, equidad de género y respeto a la diversidad.</p>
+            <p style="color:#3d4452;margin-bottom:14px">Cada nivel cuenta con una planificación pedagógica basada en estándares de calidad, que fortalece el pensamiento crítico, la creatividad, la autonomía y el trabajo colaborativo, con docentes en constante capacitación y metodologías activas e inclusivas.</p>
+            <div class="tabla-wrap"><table class="tabla"><thead><tr><th>Nivel / Mención</th><th>Grados / Cursos</th><th>Modalidad</th></tr></thead><tbody>
+            <tr><td>Educación General Básica</td><td>1.º a 10.º</td><td>Presencial</td></tr>
+            <tr><td>Bachillerato en Ciencias</td><td>1.º a 3.º de BGU</td><td>Presencial</td></tr>
+            <tr><td>Bachillerato Técnico en Informática</td><td>1.º a 3.º BT</td><td>Presencial</td></tr>
+            <tr><td>Bachillerato Técnico en Electromecánica</td><td>1.º a 3.º BT</td><td>Presencial</td></tr>
+            <tr><td>Bachillerato Técnico en Deportes</td><td>1.º a 3.º BT</td><td>Presencial</td></tr>
+            <tr><td>Bachillerato Intensivo</td><td>Jóvenes y adultos 18+</td><td>Presencial intensiva</td></tr></tbody></table></div>
+        </div>
+    </section>
+
+
+
+    <!-- ===== OFERTA EDUCATIVA ===== -->
+    <section id="oferta">
+        <div class="contenedor">
+            <div class="cabecera">
+                <span class="sobre">Oferta educativa</span>
+                <h2>Una formación para cada etapa y cada interés</h2>
+                <p>Programas académicos y técnicos que responden a las necesidades de nuestros estudiantes.</p>
+            </div>
+            <div class="oferta">
+                <button class="programa" data-p="preparatoria" type="button"><div class="ico">🧸</div><h3>Preparatoria</h3><p>Los primeros pasos en la vida escolar, con juego, afecto y aprendizaje.</p><span class="mas">Ver más +</span></button>
+                <button class="programa" data-p="egb" type="button"><div class="ico">📘</div><h3>Educación General Básica</h3><p>De 1.º a 10.º grado: las bases del conocimiento y de los valores.</p><span class="mas">Ver más +</span></button>
+                <button class="programa" data-p="ciencias" type="button"><div class="ico">🔬</div><h3>Bachillerato en Ciencias</h3><p>Formación sólida en áreas científicas y humanísticas, con pensamiento crítico y preparación universitaria.</p><span class="mas">Ver más +</span></button>
+                <button class="programa" data-p="informatica" type="button"><div class="ico">💻</div><h3>Bachillerato Técnico en Informática</h3><p>Programación, redes, mantenimiento de equipos y herramientas digitales, con alta empleabilidad.</p><span class="mas">Ver más +</span></button>
+                <button class="programa" data-p="electromecanica" type="button"><div class="ico">⚡</div><h3>Bachillerato Técnico en Electromecánica</h3><p>Práctica en electricidad, electrónica, automatización y mantenimiento industrial.</p><span class="mas">Ver más +</span></button>
+                <button class="programa" data-p="deportes" type="button"><div class="ico">⚽</div><h3>Bachillerato Técnico en Deportes en Equipo</h3><p>Desarrollo físico y técnico, con formación en entrenamiento, salud y liderazgo deportivo.</p><span class="mas">Ver más +</span></button>
+                <button class="programa destacado" data-p="intensivo" type="button" style="grid-column: 1 / -1"><div class="ico">🌟</div><h3>Bachillerato Intensivo para personas con escolaridad inconclusa</h3><p>Para mayores de 18 años que desean culminar su educación, con horarios flexibles.</p><span class="mas">Ver más +</span></button>
+            </div>
+        </div>
+    </section>
+    </div>
+
+    <div class="vista" id="vista-visitanos" hidden>
+
+
+
+    <!-- ===== VISÍTANOS ===== -->
+    <section class="visitanos" id="visitanos">
+        <div class="contenedor visita-grid">
+            <div class="visita-info">
+                <h2>Visítanos</h2>
+                <p class="direccion">18 de Agosto, entre José Joaquín de Olmedo y Eugenio Espejo<br>Catamayo, Loja, Ecuador</p>
+                <h3>Horas</h3>
+                <p class="horas">Lunes a viernes<br>7:00 – 17:00</p>
+                <a class="boton" href="https://www.google.com/maps/search/?api=1&query=Unidad+Educativa+Emiliano+Ortega+Espinoza+Catamayo" target="_blank" rel="noopener">📍 Cómo llegar</a>
+            </div>
+            <div class="mapa">
+                <iframe title="Mapa de Catamayo" loading="lazy"
+                    src="https://www.openstreetmap.org/export/embed.html?bbox=-79.3751%2C-3.9936%2C-79.3511%2C-3.9776&amp;layer=mapnik&amp;marker=-3.98565%2C-79.36307"></iframe>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== CONTACTO ===== -->
+    <section class="contacto" id="contacto">
+        <div class="contenedor">
+            <div class="cabecera">
+                <span class="sobre">Contacto</span>
+                <h2>Visítanos o escríbenos</h2>
+                <p>Estamos para ayudarte con cualquier consulta.</p>
+            </div>
+
+            <div class="contacto-grid">
+                <div>
+                    <div class="info-item">
+                        <div class="ico">📱</div>
+                        <div><b>WhatsApp y llamadas</b><a href="https://wa.me/593991876441" target="_blank" rel="noopener">099 187 6441</a></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="ico">🌐</div>
+                        <div><b>Redes sociales</b><span><a href="https://www.facebook.com/EmilianoOrtegaEspinoza" target="_blank" rel="noopener">Facebook</a> · <a href="https://www.youtube.com/watch?v=029bYdDIVYU" target="_blank" rel="noopener">YouTube</a> · <a href="https://ueeoe.wordpress.com" target="_blank" rel="noopener">Sitio oficial</a></span></div>
+                    </div>
+                </div>
+
+                <form id="form-contacto">
+                    <h3>Envíanos un mensaje</h3>
+                    <input type="text" id="f-nombre" placeholder="Tu nombre" required>
+                    <textarea id="f-mensaje" placeholder="Escribe tu mensaje..." required></textarea>
+                    <button class="boton wsp" type="submit">💬 Enviar por WhatsApp</button>
+                </form>
+            </div>
+        </div>
+    </section>
+    </div>
+
+
+
+    <!-- ===== PIE ===== -->
+    <footer>
+        <p><b>EduConecta</b> · Unidad Educativa Emiliano Ortega Espinoza · Catamayo, Loja, Ecuador</p>
+        <div class="redes">
+            <a href="https://www.facebook.com/EmilianoOrtegaEspinoza" target="_blank" rel="noopener">Facebook</a>
+            <a href="https://www.youtube.com/watch?v=029bYdDIVYU" target="_blank" rel="noopener">YouTube</a>
+            <a href="https://wa.me/593991876441" target="_blank" rel="noopener">WhatsApp</a>
+        </div>
+        <p style="margin-top:10px">© 2026 EduConecta. Todos los derechos reservados.</p>
+    </footer>
+
+    <a class="wsp-flotante" href="https://wa.me/593991876441" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp">💬 <span>WhatsApp 099 187 6441</span></a>
+
+
+
+        <!-- ===== VENTANA DE OFERTA EDUCATIVA ===== -->
+    <div id="detalle" role="dialog" aria-modal="true" aria-labelledby="det-titulo">
+        <div class="det-caja">
+            <button class="det-cerrar" id="det-cerrar" type="button" aria-label="Cerrar">✕</button>
+            <div class="det-cab"><div class="ico" id="det-ico"></div><h3 id="det-titulo"></h3><p id="det-resumen"></p></div>
+            <div class="det-cuerpo">
+                <div class="ancho" id="det-desc"></div>
+                <div class="ancho det-info" id="det-datos"></div>
+                <div class="ancho"><h4>Fotos</h4><div class="det-fotos" id="det-fotos"></div></div>
+            </div>
+            <div class="det-pie">
+                <div class="det-nav"><button type="button" id="det-ant">← Anterior</button><button type="button" id="det-sig">Siguiente →</button></div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap"><a class="boton" id="det-malla" href="#" target="_blank" rel="noopener" hidden>📄 Malla curricular</a><a class="boton wsp" id="det-wsp" href="#" target="_blank" rel="noopener">💬 Pedir información</a></div>
+            </div>
+        </div>
+    </div>
+    <div id="lb" hidden><button id="lb-x" aria-label="Cerrar">✕</button><button id="lb-p" aria-label="Anterior">‹</button><img id="lb-img" alt=""><button id="lb-n" aria-label="Siguiente">›</button></div>
+
+<script>
+        const U = "https://ueeoe.wordpress.com/wp-content/uploads/2025/07/";
+        const img = (...n) => n.map(x => U + x + "?w=900");
+        const WSP = "https://wa.me/593991876441?text=";
+
+        /* ---------- FOTOS (de la página de la escuela) ---------- */
+        const FOT = {
+            escuela: img("476610600_2027665977734003_890293117294451812_n.jpg","345265493_212493911557683_4085527692940588163_n.jpg","326259509_848389006456378_261282882394667777_n.jpg","326220126_756991555967179_3475752577459744426_n.jpg","img_20250612_095129.jpg","a100f54d-5db9-40d4-a1fa-7c3515026b79.jpg"),
+            bgu: img("dsc_6617.jpg","dsc9381.jpg","dsc9370.jpg","e10.jpg","dsc_3898.jpg","dsc_3963.jpg"),
+            info: img("informatica-1.jpg","informatica-2.jpg","informatica-3.jpg","informatica-4.jpg"),
+            electro: img("electros-1.jpg","electros-5.jpg","electros-9.jpg","electros-2.jpg"),
+            deportes: img("deportes-6.jpg","deportes-5.jpg","deportes-7.jpg","deportes-2.jpg"),
+            intensivo: img("intensivo-1.jpg","intensivo-2.jpg","intensivo-3.jpg","intensivo-4.jpg","intensivo-5.jpg","intensivo-9.jpg")
+        };
+        const DRIVE = "https://drive.google.com/file/d/";
+        const INFO_COMUN = "<b>Horarios, matrículas y requisitos:</b> consúltalos por WhatsApp al <b>099 187 6441</b> o visítanos de lunes a viernes, de 7:00 a 17:00.";
+
+        /* ---------- PROGRAMAS (propuesta educativa) ---------- */
+        const OFERTA = {
+            preparatoria: { ico: "🧸", titulo: "Preparatoria", resumen: "Los primeros pasos en la vida escolar, con juego, afecto y aprendizaje.",
+                desc: ["Etapa inicial donde niñas y niños se adaptan a la vida escolar con calidez, juego y acompañamiento, desarrollando hábitos, convivencia y las primeras bases para aprender."],
+                datos: [["Nivel", "Inicial de la escuela"], ["Modalidad", "Presencial"]], fotos: FOT.escuela.slice(0, 4) },
+            egb: { ico: "📘", titulo: "Educación General Básica", resumen: "De 1.º a 10.º grado: las bases del conocimiento y de los valores.",
+                desc: ["Brindamos una formación integral desde 1.º hasta 10.º año, centrada en el desarrollo de habilidades cognitivas, comunicativas, sociales y emocionales. En esta etapa se consolidan las bases del pensamiento lógico, el hábito lector, la convivencia democrática y el respeto a los valores.",
+                       "Los docentes usan metodologías activas, recursos tecnológicos y estrategias inclusivas para atender la diversidad de estudiantes y garantizar aprendizajes significativos. El enfoque promueve el trabajo interdisciplinario, el cuidado del medio ambiente y la identidad cultural."],
+                datos: [["Grados", "1.º a 10.º"], ["Modalidad", "Presencial"]], fotos: FOT.escuela, malla: DRIVE + "1QUvoBP-1XzrPwJuUBeisBTMuZixMKSYC/view?usp=sharing" },
+            ciencias: { ico: "🔬", titulo: "Bachillerato en Ciencias", resumen: "Formación sólida en áreas científicas y humanísticas, con pensamiento crítico y preparación universitaria.",
+                desc: ["El Bachillerato General Unificado en Ciencias ofrece una formación sólida en las áreas lógico-matemáticas, lingüísticas, naturales y sociales, para continuar estudios superiores o desenvolverse en distintos contextos con responsabilidad y pensamiento crítico.",
+                       "Enfatizamos el razonamiento científico, la argumentación, el desarrollo de proyectos y la investigación escolar como medios para aprender a aprender y aprender a convivir."],
+                datos: [["Cursos", "1.º, 2.º y 3.º BGU"], ["Modalidad", "Presencial"]], fotos: FOT.bgu, malla: DRIVE + "1ZAMep0_6aGoh9WJCOSa4nBIssYQQCSRg/view?usp=sharing" },
+            informatica: { ico: "💻", titulo: "Bachillerato Técnico en Informática", resumen: "Programación, mantenimiento de equipos, bases de datos, redes y herramientas digitales.",
+                desc: ["Capacita a los estudiantes en programación, mantenimiento de equipos, bases de datos, redes y herramientas digitales. Está orientado a jóvenes con interés en la tecnología y la innovación digital.",
+                       "Los egresados estarán preparados para ingresar al mundo laboral en el sector tecnológico o continuar estudios superiores en áreas afines, con una base teórico-práctica de calidad."],
+                datos: [["Cursos", "1.º a 3.º BT"], ["Modalidad", "Presencial"]], fotos: FOT.info, malla: DRIVE + "1NmKvRqgl_Qo8J_TEXhnvvJxMtrYV_6Oc/view?usp=sharing" },
+            electromecanica: { ico: "⚡", titulo: "Bachillerato Técnico en Electromecánica", resumen: "Formación técnica en electricidad, electrónica, sistemas mecánicos y automatización.",
+                desc: ["Ofrece una formación técnica especializada en electricidad, electrónica, sistemas mecánicos y automatización. Los estudiantes desarrollan habilidades prácticas en talleres equipados y clases con enfoque aplicado.",
+                       "Se forman técnicos capaces de enfrentar los desafíos del sector productivo o de continuar carreras universitarias de ingeniería y tecnología industrial."],
+                datos: [["Cursos", "1.º a 3.º BT"], ["Modalidad", "Presencial"]], fotos: FOT.electro, malla: DRIVE + "1R2vEfng2KUikcISdMprvCLDCG-Mknv1i/view?usp=sharing" },
+            deportes: { ico: "⚽", titulo: "Bachillerato Técnico en Deportes", resumen: "Desarrollo físico, técnico y teórico en disciplinas deportivas.",
+                desc: ["Promueve el desarrollo físico, técnico y teórico en diferentes disciplinas deportivas, con énfasis en el entrenamiento, la salud física, la nutrición, la recreación y el liderazgo.",
+                       "Impulsa a estudiantes con vocación atlética o interés en el área física y les da herramientas para continuar estudios en ciencias del deporte, educación física o carreras afines."],
+                datos: [["Cursos", "1.º a 3.º BT"], ["Modalidad", "Presencial"]], fotos: FOT.deportes, malla: DRIVE + "1HY6aB9pTrI-R16vNuoN7NHqHr_rSirqG/view?usp=sharing" },
+            intensivo: { ico: "🌟", titulo: "Bachillerato Intensivo", resumen: "Para personas con escolaridad inconclusa: culmina tus estudios en horarios flexibles.",
+                desc: ["Programa para jóvenes y adultos mayores de 18 años que desean retomar sus estudios y obtener su título de bachiller. Ofrece una modalidad intensiva, con horarios flexibles y enfoque en la formación técnica y humanista.",
+                       "Es una valiosa oportunidad para quienes no pudieron concluir su formación, y abre nuevas puertas laborales, personales y académicas. Coordinadora PCEI: Mgs. Rosana Berrú."],
+                datos: [["Cursos", "8.º, 9.º y 10.º EGB · 1.º, 2.º y 3.º BGU"], ["Duración", "5 meses por curso"], ["Modalidad", "Presencial intensiva"]], fotos: FOT.intensivo }
+        };
+        const ORDEN = Object.keys(OFERTA);
+
+        /* ---------- CONTENIDO POR JORNADA (edita aquí) ---------- */
+        const AV = l => [
+            { t: "📢 Comunicados para representantes", p: "Consulta aquí los avisos importantes de " + l + "." },
+            { t: "📅 Reuniones y fechas importantes", p: "Revisa las próximas reuniones y fechas importantes de " + l + "." }];
+        const BASE = ["Reglamento institucional"];
+        const ML = k => ({ n: "Malla curricular · " + OFERTA[k].titulo.replace("Bachillerato ", "BT ").replace("BT Técnico en ", "BT "), h: OFERTA[k].malla });
+        const JORNADAS = {
+            escuela: { nombre: "Escuela (niños)", emoji: "🎒", titulo: "Los más pequeños de la casa",
+                intro: "Aquí encuentras todo para los niños y niñas de la escuela y sus familias.",
+                sub: "Información para estudiantes y representantes.",
+                strip: [["Pública y gratuita", "Educación de calidad"], ["1.º a 10.º", "Educación General Básica"], ["Preparatoria", "Primeros pasos escolares"], ["Lun – Vie", "7:00 – 17:00"]],
+                galeria: FOT.escuela, programas: ["preparatoria", "egb"],
+                responsable: { nombre: "Mgs. Jaime Alberto Torres", cargo: "Rector", sigla: "JT" },
+                extra: "Preparatoria y Educación General Básica de 1.º a 10.º grado.", lugar: "la escuela",
+                docs: [{ n: "Reglamento institucional" }, { n: "Horario de la escuela" }, ML("egb")] },
+            matutina: { nombre: "Jornada matutina", emoji: "🌅", titulo: "Nuestros bachilleres de la mañana",
+                intro: "Información, avisos y propuesta del bachillerato de la jornada matutina.",
+                sub: "Información para estudiantes y representantes.",
+                strip: [["Pública y gratuita", "Educación de calidad"], ["4 bachilleratos", "Ciencias y Técnicos"], ["1.º a 3.º", "BGU y BT"], ["Lun – Vie", "7:00 – 17:00"]],
+                galeria: FOT.bgu, programas: ["ciencias", "informatica", "electromecanica", "deportes"],
+                responsable: { nombre: "Mgs. Jessica Curimilma", cargo: "Vicerrectora jornada matutina", sigla: "JC" },
+                extra: "Para consultas de inspección o DECE, escríbenos por WhatsApp.", lugar: "la jornada matutina",
+                docs: [{ n: "Reglamento institucional" }, { n: "Horario matutina" }, ML("ciencias"), ML("informatica")] },
+            vespertina: { nombre: "Jornada vespertina", emoji: "🌇", titulo: "Nuestros bachilleres de la tarde",
+                intro: "Información, avisos y propuesta del bachillerato de la jornada vespertina.",
+                sub: "Información para estudiantes y representantes.",
+                strip: [["Pública y gratuita", "Educación de calidad"], ["4 bachilleratos", "Ciencias y Técnicos"], ["1.º a 3.º", "BGU y BT"], ["Lun – Vie", "7:00 – 17:00"]],
+                galeria: [...FOT.info.slice(0, 2), ...FOT.electro.slice(0, 2), ...FOT.deportes.slice(0, 2)], programas: ["ciencias", "informatica", "electromecanica", "deportes"],
+                responsable: { nombre: "Lic. Jimmy Patricio Saritama", cargo: "Vicerrector jornadas vespertina y nocturna", sigla: "JS" },
+                extra: "Para consultas de inspección o DECE, escríbenos por WhatsApp.", lugar: "la jornada vespertina",
+                docs: [{ n: "Reglamento institucional" }, { n: "Horario vespertina" }, ML("electromecanica"), ML("deportes")] },
+            nocturna: { nombre: "Jornada nocturna", emoji: "🌙", titulo: "Jóvenes y adultos de la noche",
+                intro: "Información, avisos y propuesta para quienes estudian en la jornada nocturna.",
+                sub: "Información para estudiantes y representantes.",
+                strip: [["Pública y gratuita", "Educación de calidad"], ["Mayores de 18", "Jóvenes y adultos"], ["Horarios flexibles", "Modalidad intensiva"], ["5 meses", "por curso"]],
+                galeria: FOT.intensivo, programas: ["intensivo"],
+                responsable: { nombre: "Lic. Jimmy Patricio Saritama", cargo: "Vicerrector jornadas vespertina y nocturna", sigla: "JS" },
+                extra: "Bachillerato Intensivo: coordinadora PCEI, Mgs. Rosana Berrú.", lugar: "la jornada nocturna",
+                docs: [{ n: "Reglamento institucional" }, { n: "Horario nocturna" }] }
+        };
+        const FOTOS = { JT: U + "foto.jpg", JC: U + "foto2.jpg", JS: U + "jimmy.jpg" };
+
+        const $ = id => document.getElementById(id);
+        const selector = $("selector");
+        let jornada = null, galeriaActual = [];
+
+        /* ---------- tarjetas de programas ---------- */
+        function tarjetas(el, claves) {
+            el.innerHTML = claves.map(k => { const o = OFERTA[k];
+                return `<button class="programa${k === "intensivo" ? " destacado" : ""}" data-p="${k}" type="button"${k === "intensivo" && claves.length > 1 ? ' style="grid-column:1/-1"' : ""}><div class="ico">${o.ico}</div><h3>${o.titulo}</h3><p>${o.resumen}</p><span class="mas">Ver más +</span></button>`; }).join("");
+        }
+        tarjetas($("oferta-jornada-grid"), []);
+        tarjetas(document.querySelector("#oferta .oferta"), ORDEN);
+
+        /* ---------- mostrar jornada ---------- */
+        function mostrarJornada(clave) {
+            const j = JORNADAS[clave]; if (!j) return;
+            jornada = clave; document.body.dataset.jornada = clave;
+            $("chip-texto").textContent = j.nombre;
+            $("hero-etiqueta").textContent = j.emoji + " " + j.nombre;
+            $("hero-intro").textContent = j.intro;
+            $("strip").innerHTML = j.strip.map(d => `<div class="dato"><b>${d[0]}</b><span>${d[1]}</span></div>`).join("");
+            galeriaActual = j.galeria;
+            $("g-titulo").textContent = j.titulo;
+            $("galeria-grid").innerHTML = j.galeria.map((u, i) => `<button class="gfoto" data-i="${i}" type="button"><img src="${u}" alt="" loading="lazy" onerror="this.parentNode.remove()"></button>`).join("");
+            tarjetas($("oferta-jornada-grid"), j.programas);
+            $("j-titulo").style.display = "none";
+            $("j-sub").textContent = j.sub;
+            $("j-avatar").textContent = j.responsable.sigla;
+            if (FOTOS[j.responsable.sigla]) { const im = document.createElement("img"); im.src = FOTOS[j.responsable.sigla]; im.alt = ""; im.onerror = () => im.remove(); $("j-avatar").appendChild(im); }
+            $("j-nombre").textContent = j.responsable.nombre; $("j-cargo").textContent = j.responsable.cargo; $("j-extra").textContent = j.extra;
+            $("j-avisos").innerHTML = AV(j.lugar).map(a => `<div class="aviso"><h4>${a.t}</h4><p>${a.p}</p></div>`).join("");
+            $("j-docs").innerHTML = j.docs.map(d => `<div class="doc"><span>📄 ${d.n}</span><a href="${d.h || "#"}"${d.h ? ' target="_blank" rel="noopener"' : ""}>${d.h ? "Abrir" : "Descargar"}</a></div>`).join("");
+            document.title = "EduConecta | " + j.nombre;
+        }
+        function elegirJornada(c) {
+            mostrarJornada(c); try { sessionStorage.setItem("jornada", c); } catch (e) {}
+            selector.classList.add("oculto"); document.body.classList.remove("bloqueado"); irA("inicio");
+        }
+        document.querySelectorAll(".jornada-btn").forEach(b => b.addEventListener("click", () => elegirJornada(b.dataset.j)));
+        $("cambiar").addEventListener("click", () => { selector.classList.remove("oculto"); document.body.classList.add("bloqueado"); });
+
+        /* ---------- pestañas (vistas) ---------- */
+        function irA(v, sc) {
+            document.querySelectorAll(".vista").forEach(x => x.hidden = x.id !== "vista-" + v);
+            document.querySelectorAll("nav > a[data-ir]").forEach(a => a.classList.toggle("activo", a.dataset.ir === v && !a.dataset.sc));
+            $("menu").classList.remove("abierto");
+            if (sc && $(sc)) $(sc).scrollIntoView({ behavior: "smooth" }); else window.scrollTo(0, 0);
+        }
+        document.addEventListener("click", e => {
+            const a = e.target.closest("[data-ir],[data-sc]");
+            if (a) { e.preventDefault(); const v = a.dataset.ir; if (v) irA(v, a.dataset.sc); else { const t = $(a.dataset.sc); if (t) t.scrollIntoView({ behavior: "smooth" }); } return; }
+            const p = e.target.closest(".programa"); if (p) abrirDetalle(p.dataset.p);
+            const g = e.target.closest(".gfoto"); if (g) abrirLB(galeriaActual, +g.dataset.i);
+            const f = e.target.closest(".det-fotos button"); if (f) abrirLB(OFERTA[actual].fotos, +f.dataset.i);
+        });
+        $("hamb").addEventListener("click", () => $("menu").classList.toggle("abierto"));
+
+        /* ---------- visor de fotos ---------- */
+        let lbArr = [], lbI = 0;
+        function abrirLB(arr, i) { lbArr = arr; lbI = i; $("lb-img").src = arr[i]; $("lb").hidden = false; }
+        function lbMover(d) { lbI = (lbI + d + lbArr.length) % lbArr.length; $("lb-img").src = lbArr[lbI]; }
+        $("lb-x").onclick = () => $("lb").hidden = true;
+        $("lb-p").onclick = () => lbMover(-1); $("lb-n").onclick = () => lbMover(1);
+        $("lb").addEventListener("click", e => { if (e.target.id === "lb") $("lb").hidden = true; });
+
+        /* ---------- ventana de programa ---------- */
+        let actual = null;
+        function abrirDetalle(k) {
+            const o = OFERTA[k]; if (!o) return; actual = k;
+            $("det-ico").textContent = o.ico; $("det-titulo").textContent = o.titulo; $("det-resumen").textContent = o.resumen;
+            $("det-desc").innerHTML = o.desc.map(p => `<p>${p}</p>`).join("");
+            $("det-datos").innerHTML = o.datos.map(d => `<b>${d[0]}:</b> ${d[1]}`).join(" &nbsp;·&nbsp; ") + "<br>" + INFO_COMUN;
+            $("det-fotos").innerHTML = o.fotos.map((u, i) => `<button data-i="${i}" type="button"><img src="${u}" alt="" loading="lazy" onerror="this.parentNode.remove()"></button>`).join("");
+            $("det-malla").hidden = !o.malla; if (o.malla) $("det-malla").href = o.malla;
+            $("det-wsp").href = WSP + encodeURIComponent("Hola, quisiera información sobre: " + o.titulo);
+            $("detalle").classList.add("abierto"); document.body.classList.add("bloqueado");
+            $("detalle").querySelector(".det-caja").scrollTop = 0;
+        }
+        function cerrarDetalle() { $("detalle").classList.remove("abierto"); if (selector.classList.contains("oculto")) document.body.classList.remove("bloqueado"); }
+        const mover = d => abrirDetalle(ORDEN[(ORDEN.indexOf(actual) + d + ORDEN.length) % ORDEN.length]);
+        $("det-cerrar").onclick = cerrarDetalle; $("det-ant").onclick = () => mover(-1); $("det-sig").onclick = () => mover(1);
+        $("detalle").addEventListener("click", e => { if (e.target.id === "detalle") cerrarDetalle(); });
+        document.addEventListener("keydown", e => {
+            if (!$("lb").hidden) { if (e.key === "Escape") $("lb").hidden = true; if (e.key === "ArrowRight") lbMover(1); if (e.key === "ArrowLeft") lbMover(-1); return; }
+            if (!$("detalle").classList.contains("abierto")) return;
+            if (e.key === "Escape") cerrarDetalle(); if (e.key === "ArrowRight") mover(1); if (e.key === "ArrowLeft") mover(-1);
+        });
+
+        /* ---------- formulario -> WhatsApp ---------- */
+        $("form-contacto").addEventListener("submit", e => { e.preventDefault();
+            window.open(WSP + encodeURIComponent(`Hola, soy ${$("f-nombre").value}. ${$("f-mensaje").value}`), "_blank"); });
+
+        let g = null; try { g = sessionStorage.getItem("jornada"); } catch (e) {}
+        if (g && JORNADAS[g]) elegirJornada(g);
+    </script>
+
+
+</body>
+</html>
